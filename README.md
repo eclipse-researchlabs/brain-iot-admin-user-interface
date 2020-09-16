@@ -17,22 +17,14 @@ The Javascript UI is unchanged from https://github.com/paremus/js_client.
 
 ## Testing
 
-The app.test sub-project allows stand-alone testing of the UI. By default, `app.bndrun` is configured to use the security-light-marketplace:
-
-```
-# marketplace index for BMS
-# (assumes marketplace is checked out next to this project)
-mktplIndexes=file://${.}/../../marketplace/security-light-marketplace/target/marketplace/index.xml
-```
-
-To launch standalone UI:
+The app.test sub-project allows stand-alone testing of the UI. To launch standalone UI:
 
 ```
 bnd run app.test/app.bndrun
 ```
 
-Now browse to http://localhost:8081 and login as admin (password: admin)
+Now browse to http://localhost:8082/config and login as admin (password: admin)
 
-
+Then select the Behaviour Management Service and and set the Marketplace indexes, for example to: [security-light-marketplace](https://nexus.repository-pert.ismb.it/repository/marketplaces/com.paremus.brain.iot.marketplace/security-light-marketplace/0.0.1-SNAPSHOT/index.xml)
 
 ## end

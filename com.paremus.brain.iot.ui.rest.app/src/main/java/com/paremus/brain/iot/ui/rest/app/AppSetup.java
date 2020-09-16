@@ -23,9 +23,7 @@ import org.apache.shiro.web.mgt.CookieRememberMeManager;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.web.servlet.ShiroFilter;
 import org.osgi.annotation.bundle.Requirement;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.Constants;
-import org.osgi.framework.ServiceRegistration;
+import org.osgi.framework.*;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.cm.annotations.RequireConfigurationAdmin;
@@ -65,6 +63,7 @@ public class AppSetup {
     private ConfigurationAdmin cm;
 
     private ServiceRegistration<ServletContextHelper> rootContext;
+    private ServiceRegistration<ServletContextHelper> exampleContext;
     private ServiceRegistration<Filter> shiroFilter;
 
     @Activate
@@ -109,8 +108,10 @@ public class AppSetup {
             bmsCfg.update(bmsConfig);
         }
 
+        // target jackson to all apps (to include default used by examples)
         setPid("org.apache.aries.jax.rs.jackson",
-                JAX_RS_APPLICATION_SELECT, "(osgi.jaxrs.name=paremus-rest-ui)");
+                // JAX_RS_APPLICATION_SELECT, "(osgi.jaxrs.name=paremus-rest-ui)");
+                JAX_RS_APPLICATION_SELECT, "(osgi.jaxrs.name=*)");
 
         setPid("org.apache.aries.jax.rs.shiro.authorization",
                 JAX_RS_APPLICATION_SELECT, "(osgi.jaxrs.name=paremus-rest-ui)",
@@ -127,12 +128,14 @@ public class AppSetup {
 
         rootContext = registerRootContext();
         shiroFilter = registerShiroFilter();
+        exampleContext = registerExampleContext();
     }
 
     @Deactivate
     private void deactivate(BundleContext context) throws Exception {
         shiroFilter.unregister();
         rootContext.unregister();
+        exampleContext.unregister();
 
         setPid("org.apache.felix.http");
         setFactoryPid("org.apache.aries.jax.rs.whiteboard");
@@ -148,6 +151,28 @@ public class AppSetup {
         ServletContextHelper helper = new ServletContextHelper() {
         };
         return context.registerService(ServletContextHelper.class, helper, props);
+    }
+
+    // override the default context to support running the security light example
+    // in same framework as UI
+    private ServiceRegistration<ServletContextHelper> registerExampleContext() {
+        Dictionary<String, Object> props = new Hashtable<>();
+        props.put(HTTP_WHITEBOARD_CONTEXT_NAME, "default");
+        props.put(HTTP_WHITEBOARD_CONTEXT_PATH, "/example");
+
+        ServiceFactory<ServletContextHelper> factory = new ServiceFactory<ServletContextHelper>() {
+            @Override
+            public ServletContextHelper getService(Bundle bundle, ServiceRegistration<ServletContextHelper> registration) {
+                return new ServletContextHelper(bundle) {
+                };
+            }
+
+            @Override
+            public void ungetService(Bundle bundle, ServiceRegistration<ServletContextHelper> registration, ServletContextHelper service) {
+            }
+        };
+
+        return context.registerService(ServletContextHelper.class, factory, props);
     }
 
     private Realm setupRealm() {
@@ -189,7 +214,7 @@ public class AppSetup {
         return env;
     }
 
-    private void    configure(String pid, boolean factory, String... kv) throws IOException {
+    private void configure(String pid, boolean factory, String... kv) throws IOException {
         if (kv.length % 2 != 0)
             throw new IllegalArgumentException("odd number of key/value pairs");
         Configuration config = factory ? cm.getFactoryConfiguration(pid, "?")
