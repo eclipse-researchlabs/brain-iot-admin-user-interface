@@ -21,7 +21,7 @@ mktplIndexes=
  -Djava.util.logging.config.file=${.}/logging.properties,\
  -Dorg.apache.felix.http.requestlog.file.path=./request.log,\
  -Dcom.paremus.brain.iot.ui.bms.indexes=${mktplIndexes},\
- -Dorg.osgi.service.http.port=8082
+ -Dorg.osgi.service.http.port=8081
 
 
 # javascript client is embedded in admin-server
