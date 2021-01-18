@@ -3,3 +3,6 @@ target/
 request.log
 .idea/
 *.iml
+.project
+.settings
+.classpath
